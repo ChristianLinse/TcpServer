@@ -1,23 +1,40 @@
 namespace TcpServer;
 
-public class Worker : BackgroundService
-{
-    private readonly ILogger<Worker> _logger;
+using System.Net;
+using System.Net.Sockets;
 
-    public Worker(ILogger<Worker> logger)
+public class Worker(IServiceScopeFactory serviceScopeFactory) : BackgroundService
+{
+    private readonly TcpListener listener = new TcpListener(new IPAddress(0), 12345);
+
+    public override void Dispose()
     {
-        _logger = logger;
+        listener.Dispose();
+        base.Dispose();
+    }
+
+    public override async Task StartAsync(CancellationToken cancellationToken)
+    {
+        listener.Start();
+        await base.StartAsync(cancellationToken);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (stoppingToken.IsCancellationRequested is false)
         {
-            if (_logger.IsEnabled(LogLevel.Information))
+            await listener.AcceptTcpClientAsync(stoppingToken).AsTask().ContinueWith(async task =>
             {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            }
-            await Task.Delay(1000, stoppingToken);
+                using var scope = serviceScopeFactory.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<IProtocol>().ExecuteAsync(
+                    task.Result, stoppingToken);
+            });
         }
+    }
+
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        listener.Stop();
+        await base.StopAsync(cancellationToken);
     }
 }

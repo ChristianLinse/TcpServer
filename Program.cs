@@ -1,7 +1,6 @@
 using TcpServer;
 
 var builder = Host.CreateApplicationBuilder(args);
+builder.Services.AddScoped<IProtocol, WhateverProtocol>();
 builder.Services.AddHostedService<Worker>();
-
-var host = builder.Build();
-host.Run();
+await builder.Build().RunAsync();
