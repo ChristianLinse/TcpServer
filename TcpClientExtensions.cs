@@ -17,6 +17,18 @@ public static class TcpClientExtensions
         }
     }
 
+    public static async Task SendAsync(
+        this TcpClient client, byte[] buffer, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await client.GetStream().WriteAsync(buffer, cancellationToken);
+        }
+        catch
+        {
+        }
+    }
+
     public static void RstAndDispose(this TcpClient client)
     {
         try

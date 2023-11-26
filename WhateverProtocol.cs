@@ -20,6 +20,8 @@ public class WhateverProtocol(ILogger<WhateverProtocol> logger) : IProtocol
                 // Do stuff
                 logger.LogInformation(
                     "{hash_code} {message}", GetHashCode(), Encoding.ASCII.GetString(segment));
+                await client.SendAsync(Encoding.ASCII.GetBytes(
+                    "test" + Environment.NewLine), cancellationTokenSource.Token);
                 // Do more stuff
             }
             else
